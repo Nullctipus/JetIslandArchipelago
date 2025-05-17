@@ -67,7 +67,7 @@ public class SaveData
                 AccessTools.Field(modifierType, nameof(activeModifiers.HookshotsOnly))),
             new RotateWorldModifier(activeModifiers,
                 AccessTools.Field(modifierType, nameof(activeModifiers.SidewaysWorld)), 
-                new Vector3(0f,0f,90f),Vector3.up*0.8f,new Vector3(0f,0f,-90f)),
+                new Vector3(0f,0f,90f),Vector3.up*0.8f,new Vector3(0f,0f,-1f)),
             new GravityModifier(activeModifiers,
                 AccessTools.Field(modifierType, nameof(activeModifiers.SunGravity)),
                 274f),
@@ -139,13 +139,13 @@ public class SaveData
             new Modifier(activeModifiers,
                 AccessTools.Field(modifierType, nameof(activeModifiers.GunRapidFire))),
             new SkyModifier(activeModifiers,
-                AccessTools.Field(modifierType, nameof(activeModifiers.BouncyGround)),
+                AccessTools.Field(modifierType, nameof(activeModifiers.NightSky)),
                 CameraClearFlags.Skybox,PlayerBody.localPlayer.modifiers.nightSkyMaterial,
                 PlayerBody.localPlayer.modifiers.nightSkyLightColor,
                 PlayerBody.localPlayer.modifiers.nightSkyAmbientLightStrength,
                 new Color(0f, 0.05f, 0.05f, 1f)),
             new SkyModifier(activeModifiers,
-                AccessTools.Field(modifierType, nameof(activeModifiers.BouncyGround)),
+                AccessTools.Field(modifierType, nameof(activeModifiers.PitchBlack)),
                 CameraClearFlags.Color,PlayerBody.localPlayer.modifiers.nightSkyMaterial,
                 Color.black, 0,
                 new Color(0f, 0.05f, 0.05f, 1f)),
@@ -169,7 +169,7 @@ public class SaveData
                 }),
             new Modifier(activeModifiers,
                 AccessTools.Field(modifierType, nameof(activeModifiers.DeathOnHardImpact))),
-            new QuickModifier(activeModifiers,
+            new QuickModifier(activeModifiers, 
                 AccessTools.Field(modifierType, nameof(activeModifiers.PalmJets)), (player) =>
                 {
                     player.movement.leftJetTransform.localRotation = Quaternion.Euler(17f, -94f, -143f);
@@ -393,22 +393,31 @@ public class SaveData
     internal void OnCheck(long id, ArchipelagoWrapper.CheckType type, int index)
     {
         if(!PlayerBody.localPlayer) return;
-        var player = PlayerBody.localPlayer;
-        switch (type)
+        try
         {
-            case ArchipelagoWrapper.CheckType.Stat:
-                PlayerPrefs.SetInt($"{FakeProfile}UpgradeBot{index}",1);
-                break;
-            case ArchipelagoWrapper.CheckType.Modifier:
-                PlayerPrefs.SetInt($"{FakeProfile}ModifierUnlocked{player.modifiers.modifierUnlockStrings[index]}",1);
-                player.modifiers.gottenModifiers[index] = true;
-                break;
-            case ArchipelagoWrapper.CheckType.Boss:
-                PlayerPrefs.SetInt($"{FakeProfile}Miniboss{index+1}BeatAtLeastOnce",1);
-                PlayerPrefs.SetInt($"{FakeProfile}Miniboss{index+1}Beat",1);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            var player = PlayerBody.localPlayer;
+            switch (type)
+            {
+                case ArchipelagoWrapper.CheckType.Stat:
+                    PlayerPrefs.SetInt($"{FakeProfile}UpgradeBot{index}", 1);
+                    break;
+                case ArchipelagoWrapper.CheckType.Modifier:
+                    PlayerPrefs.SetInt($"{FakeProfile}ModifierUnlocked{player.modifiers.modifierUnlockStrings[index]}",
+                        1);
+                    if(player.modifiers.gottenModifiers != null && player.modifiers.gottenModifiers.Length > index)
+                        player.modifiers.gottenModifiers[index] = true;
+                    break;
+                case ArchipelagoWrapper.CheckType.Boss:
+                    PlayerPrefs.SetInt($"{FakeProfile}Miniboss{index + 1}BeatAtLeastOnce", 1);
+                    PlayerPrefs.SetInt($"{FakeProfile}Miniboss{index + 1}Beat", 1);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            }
+        }
+        catch (Exception e)
+        {
+            Plugin.Logger.LogError(e);
         }
     }
 

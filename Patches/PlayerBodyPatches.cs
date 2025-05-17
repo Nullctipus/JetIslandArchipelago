@@ -47,7 +47,18 @@ public class PlayerBodyPatches
                 PlayerPrefs.SetInt($"{SaveData.FakeProfile}CheckpointGotten{i}", 0);
 
             }
+        __instance.respawning.lastGottenCheckpoint = ArchipelagoWrapper.Instance.GetDataStorage("Checkpoint", SaveData.Instance.StartingCheckpoint);
+        PlayerPrefs.SetInt(SaveData.FakeProfile + "LastCheckpointGotten",
+            __instance.respawning.currentlyCheckingRespawnPoint);
 
+        if (__instance.modifiers.modifierUnlockStrings == null || __instance.modifiers.modifierUnlockStrings.Length == 0)
+        {
+            __instance.modifiers.modifierUnlockStrings =
+                Object.FindObjectOfType<StartGameScript>().modifierUnlockStrings;
+        }
+        
+        __instance.modifiers.gottenModifiers = new bool[__instance.modifiers.modifierOrbVectors.Length];
+        
         foreach (var kvp in ArchipelagoWrapper.CheckedLocations)
             SaveData.Instance.OnCheck(kvp.Key, kvp.Value.Item1, kvp.Value.Item2);
 
@@ -69,6 +80,19 @@ public class PlayerBodyPatches
         var player = __instance;
         player.tutorial.tutorialOver = true;
 
+        StringBuilder sb = new();
+        foreach (var n in __instance.modifiers.modifierDisplayStrings)
+        {
+            sb.AppendLine(n);
+        }
+
+        sb.AppendLine();
+        foreach (var n in __instance.modifiers.modifierUnlockStrings)
+        {
+            sb.AppendLine(n);
+        }
+        Plugin.Logger.LogDebug(sb.ToString());
+
         int checkpoint = ArchipelagoWrapper.Instance.GetDataStorage("Checkpoint", SaveData.Instance.StartingCheckpoint);
         __instance.respawning.lastGottenCheckpoint = checkpoint;
         MainThreadHelper.Enqueue(() =>
@@ -86,7 +110,6 @@ public class PlayerBodyPatches
     static bool PrefixSetupModifiers(PlayerBody __instance)
     {
         if (!__instance.pvIsMine) return true;
-        __instance.modifiers.gottenModifiers = new bool[__instance.modifiers.modifierOrbVectors.Length];
         return false;
     }
 
@@ -227,7 +250,7 @@ public class PlayerBodyPatches
                 text.anchor = TextAnchor.LowerCenter;
                 text.transform.localPosition = Vector3.up;
 
-                text.text = $"Upgrade Bot {i}: {PlayerBody.upgradeBotTypes[i]}";
+                text.text = $"Upgrade Bot {i}";
 
                 __instance.pauseMenu.mapPoints[offset + i].nameTag = text.transform;
             }
@@ -245,7 +268,6 @@ public class PlayerBodyPatches
                 r.material.color = Configuration.Instance.ModifierColor.Value;
                     
                 var obj = __instance.pauseMenu.mapPoints[offset-1].nameTag;
-                Plugin.Logger.LogDebug(obj.name);
                 TextMesh text = Object.Instantiate(obj, __instance.pauseMenu.mapPoints[offset + PlayerBody.upgradeBotSpawnVectors.Length + i].mapPoint.transform)
                     .GetComponent<TextMesh>();
                 text.color = Configuration.Instance.ModifierColor.Value;
